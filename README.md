@@ -1,6 +1,8 @@
 # Email Automation with JMP and Python
 
-Easily create emails with JMP data directly in Outlook. Get your graphs into an email report!
+Easily create emails with JMP data directly into Outlook. Get your graphs into an email report!
+
+This is an example and template other JMP scripters can use. 
 
 ## Features
 - Exports JMP graphs into images.
@@ -17,7 +19,7 @@ Easily create emails with JMP data directly in Outlook. Get your graphs into an 
 > **Note:** JMP 18 comes with Python built in. This script was originally created before JMP 18, but you can run it directly through JMP’s Python interpreter without needing a separate Python installation.
 
 ## Setup
-1. Install Python 3 (if using JMP < 18).
+1. Install Python 3.
 2. Install the required libraries:
    ```bash
    pip install pywin32 Pillow
