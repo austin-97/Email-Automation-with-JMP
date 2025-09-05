@@ -1,0 +1,133 @@
+Names Default To Here(1);
+
+CREATE_EMAIL = 1;
+
+//*************************************************Utility****************************************************************************
+
+//save images
+save_image = Function({},
+	update_msg("Saving Image");
+	folder_path_save_image = "\["C:\dev\JMP Back UP\Email Automation with JMP\util\save_image.py"]\";
+	Run Program(,
+		Executable( "python"),
+		Options( folder_path_save_image )
+	);
+	wait(.5);
+);
+
+//delete images
+delete_image = Function({},
+	update_msg("Deleting Images");
+	folder_path_delete_all = "\["C:\dev\JMP Back UP\Email Automation with JMP\util\delete_all.py"]\";
+	Run Program(
+		Executable( "python"),
+		Options( folder_path_delete_all )
+	);
+	wait(.5);
+);
+
+//create draft email of images
+create_outlookdraft = Function({},
+	update_msg("Creating draft email");
+	folder_path_create_email= "\["C:\dev\JMP Back UP\Email Automation with JMP\util\outlookdraft.py"]\";
+	Run Program(
+		Executable( "python"),
+		Options( folder_path_create_email ),
+		Read Function( "text" )
+	);
+);
+
+//Update msg box for longer querys
+update_msg= Function({new_msg},
+	tc_tb << delete box;
+	msg << append(
+		tc_tb = Text Box(new_msg, << Margin(Left( 525 ), Top( 50 ), Right( 0 ), Bottom( 50 )), << Set Font Style( "Bold" ), << Set Font Size( 14 ) )
+	);
+	wait(.5);
+);
+
+//Creates a tab page box on the main window and returns it. 
+toTabBox = Function({name},
+	{},
+	this_tb << append(
+		tpb = Tab Page Box(name)
+	);
+	Return(tpb);
+);
+
+//Exmple data*****************************************************************************
+expr1 = Expr(
+    new_tab = toTabBox("Example 1");
+
+    dt = Open( "$SAMPLE_DATA/Big Class.jmp", Invisible);
+
+    new_tab << Append(
+        dt << Graph Builder(
+            Variables( X( :height ), Y( :weight ) ),
+            Elements( Points( X, Y ), Smoother( X, Y ) ),
+            Show Control Panel( 0 )
+        );
+    );
+);
+
+expr2 = Expr(
+    new_tab = toTabBox("Example 2");
+
+    dt = Open( "$SAMPLE_DATA/Big Class.jmp", Invisible);
+
+    new_tab << Append(
+        dt << Distribution(
+            Nominal Distribution( Column( :age ) ),
+            Continuous Distribution( Column( :weight ) ),
+            SendToReport(
+                Dispatch( "age", "Distrib Nom Hist", FrameBox, {Frame Size( 178, 318 )} )
+            )
+        );
+    );
+);
+
+//**************************** Main Window *****************************************************************************************************************************************
+main_window = New Window("Email Automation",
+	<< Set Window Size( 1500, 800 ),
+	msg1 = H List Box(
+		Text Box("", << Margin(Left( 5 ), Top( 5 ), Right( 0 ), Bottom( 0 )), << Set Font Style( "" ), << Set Font Size( 10 ) ),
+		Text Box("", << Margin(Left( 5 ), Top( 5 ), Right( 0 ), Bottom( 0 )), << Set Font Style( "Bold" ), << Set Font Size( 10 ) ),
+	),
+	msg = H List Box(
+		tc_tb = Text Box("Loading...", << Margin(Left( 525 ), Top( 50 ), Right( 0 ), Bottom( 50 )), << Set Font Style( "Bold" ), << Set Font Size( 14 ) )
+	),
+	this_tb = Tab Box(
+        
+	)
+);
+
+main_window << Bring Window To Front;
+wait(.5);
+
+//Helper function
+evaluate = Function({name, expr},
+    update_msg("Evaluating " || name);
+    Eval(expr);
+);
+
+//List of our example data**************************************
+expr_list = {expr1, expr2};
+
+//Main loop
+for(init_index = 1, init_index<=N Items(expr_list), init_index++,
+	try(
+		if(init_index == 1 & CREATE_EMAIL == 1, delete_image());
+        evaluate("Expression "||Char(init_index), expr_list[init_index]);
+        if(CREATE_EMAIL == 1,
+            tpb << Copy Picture();
+            try(save_image()); 
+        );
+	 	,
+	    print("Exception Message ", exception_msg);
+	);
+);
+
+if( CREATE_EMAIL == 1, create_outlookdraft() );
+
+msg << Delete Box();
+msg1 << Delete Box();
